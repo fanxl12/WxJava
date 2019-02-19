@@ -1,181 +1,89 @@
 package me.chanjar.weixin.cp.bean;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.commons.lang3.StringUtils;
-
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
-import me.chanjar.weixin.common.api.WxConsts.KefuMsgType;
+import lombok.NoArgsConstructor;
+import me.chanjar.weixin.cp.WxCpConsts.AppChatMsgType;
 import me.chanjar.weixin.cp.bean.article.MpnewsArticle;
 import me.chanjar.weixin.cp.bean.article.NewArticle;
-import me.chanjar.weixin.cp.bean.messagebuilder.FileBuilder;
-import me.chanjar.weixin.cp.bean.messagebuilder.ImageBuilder;
-import me.chanjar.weixin.cp.bean.messagebuilder.MarkdownMsgBuilder;
-import me.chanjar.weixin.cp.bean.messagebuilder.MpnewsBuilder;
-import me.chanjar.weixin.cp.bean.messagebuilder.NewsBuilder;
-import me.chanjar.weixin.cp.bean.messagebuilder.TextBuilder;
-import me.chanjar.weixin.cp.bean.messagebuilder.TextCardBuilder;
-import me.chanjar.weixin.cp.bean.messagebuilder.VideoBuilder;
-import me.chanjar.weixin.cp.bean.messagebuilder.VoiceBuilder;
+
+import java.io.Serializable;
+import java.util.List;
 
 /**
- * 消息.
+ * <pre>
+ * 应用推送消息
+ * Created by Binary Wang on 2019/1/26.
+ * </pre>
  *
- * @author Daniel Qian
+ * @author <a href="https://github.com/binarywang">Binary Wang</a>
  */
 @Data
-public class WxCpMessage implements Serializable {
-  private static final long serialVersionUID = -2082278303476631708L;
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class WxCpAppChatMessage implements Serializable {
+  private static final long serialVersionUID = -5469013416372240229L;
 
-  private String toUser;
-  private String toParty;
-  private String toTag;
-  private Integer agentId;
   private String msgType;
   private String content;
+  private String chatId;
   private String mediaId;
-  private String thumbMediaId;
   private String title;
   private String description;
-  private String musicUrl;
-  private String hqMusicUrl;
-  private String safe;
+  private Boolean safe;
   private String url;
   private String btnTxt;
-  private List<NewArticle> articles = new ArrayList<>();
-  private List<MpnewsArticle> mpnewsArticles = new ArrayList<>();
+  private List<NewArticle> articles;
+  private List<MpnewsArticle> mpnewsArticles;
 
   /**
-   * 获得文本消息builder.
+   * 构建文本消息.
    */
-  public static TextBuilder TEXT() {
-    return new TextBuilder();
+  public static WxCpAppChatMessage buildTextMsg(String chatId, String content, boolean safe) {
+    final WxCpAppChatMessage message = new WxCpAppChatMessage();
+    message.setMsgType(AppChatMsgType.TEXT);
+    message.setContent(content);
+    message.setChatId(chatId);
+    message.setSafe(safe);
+    return message;
   }
 
   /**
-   * 获得文本卡片消息builder.
+   * 生成json字符串.
    */
-  public static TextCardBuilder TEXTCARD() {
-    return new TextCardBuilder();
-  }
-
-  /**
-   * 获得图片消息builder.
-   */
-  public static ImageBuilder IMAGE() {
-    return new ImageBuilder();
-  }
-
-  /**
-   * 获得语音消息builder.
-   */
-  public static VoiceBuilder VOICE() {
-    return new VoiceBuilder();
-  }
-
-  /**
-   * 获得视频消息builder.
-   */
-  public static VideoBuilder VIDEO() {
-    return new VideoBuilder();
-  }
-
-  /**
-   * 获得图文消息builder.
-   */
-  public static NewsBuilder NEWS() {
-    return new NewsBuilder();
-  }
-
-  /**
-   * 获得mpnews图文消息builder.
-   */
-  public static MpnewsBuilder MPNEWS() {
-    return new MpnewsBuilder();
-  }
-
-  /**
-   * 获得markdown消息builder.
-   */
-  public static MarkdownMsgBuilder MARKDOWN() {
-    return new MarkdownMsgBuilder();
-  }
-
-  /**
-   * 获得文件消息builder.
-   */
-  public static FileBuilder FILE() {
-    return new FileBuilder();
-  }
-
-
-  /**
-   * <pre>
-   * 请使用
-   * {@link KefuMsgType#TEXT}
-   * {@link KefuMsgType#IMAGE}
-   * {@link KefuMsgType#VOICE}
-   * {@link KefuMsgType#MUSIC}
-   * {@link KefuMsgType#VIDEO}
-   * {@link KefuMsgType#NEWS}
-   * {@link KefuMsgType#MPNEWS}
-   * {@link KefuMsgType#MARKDOWN}
-   * </pre>
-   *
-   * @param msgType 消息类型
-   */
-  public void setMsgType(String msgType) {
-    this.msgType = msgType;
-  }
-
   public String toJson() {
     JsonObject messageJson = new JsonObject();
-    if (this.getAgentId() != null) {
-      messageJson.addProperty("agentid", this.getAgentId());
-    }
-
-    if (StringUtils.isNotBlank(this.getToUser())) {
-      messageJson.addProperty("touser", this.getToUser());
-    }
-
     messageJson.addProperty("msgtype", this.getMsgType());
+    messageJson.addProperty("chatid", this.getChatId());
 
-    if (StringUtils.isNotBlank(this.getToParty())) {
-      messageJson.addProperty("toparty", this.getToParty());
-    }
-
-    if (StringUtils.isNotBlank(this.getToTag())) {
-      messageJson.addProperty("totag", this.getToTag());
+    if (this.getSafe() != null && this.getSafe()) {
+      messageJson.addProperty("safe", 1);
     }
 
     this.handleMsgType(messageJson);
-
-    if (StringUtils.isNotBlank(this.getSafe())) {
-      messageJson.addProperty("safe", this.getSafe());
-    }
 
     return messageJson.toString();
   }
 
   private void handleMsgType(JsonObject messageJson) {
     switch (this.getMsgType()) {
-      case KefuMsgType.TEXT: {
+      case AppChatMsgType.TEXT: {
         JsonObject text = new JsonObject();
         text.addProperty("content", this.getContent());
         messageJson.add("text", text);
         break;
       }
-      case KefuMsgType.MARKDOWN: {
+      case AppChatMsgType.MARKDOWN: {
         JsonObject text = new JsonObject();
         text.addProperty("content", this.getContent());
         messageJson.add("markdown", text);
         break;
       }
-      case KefuMsgType.TEXTCARD: {
+      case AppChatMsgType.TEXTCARD: {
         JsonObject text = new JsonObject();
         text.addProperty("title", this.getTitle());
         text.addProperty("description", this.getDescription());
@@ -184,34 +92,33 @@ public class WxCpMessage implements Serializable {
         messageJson.add("textcard", text);
         break;
       }
-      case KefuMsgType.IMAGE: {
+      case AppChatMsgType.IMAGE: {
         JsonObject image = new JsonObject();
         image.addProperty("media_id", this.getMediaId());
         messageJson.add("image", image);
         break;
       }
-      case KefuMsgType.FILE: {
+      case AppChatMsgType.FILE: {
         JsonObject image = new JsonObject();
         image.addProperty("media_id", this.getMediaId());
         messageJson.add("file", image);
         break;
       }
-      case KefuMsgType.VOICE: {
+      case AppChatMsgType.VOICE: {
         JsonObject voice = new JsonObject();
         voice.addProperty("media_id", this.getMediaId());
         messageJson.add("voice", voice);
         break;
       }
-      case KefuMsgType.VIDEO: {
+      case AppChatMsgType.VIDEO: {
         JsonObject video = new JsonObject();
         video.addProperty("media_id", this.getMediaId());
-        video.addProperty("thumb_media_id", this.getThumbMediaId());
         video.addProperty("title", this.getTitle());
         video.addProperty("description", this.getDescription());
         messageJson.add("video", video);
         break;
       }
-      case KefuMsgType.NEWS: {
+      case AppChatMsgType.NEWS: {
         JsonObject newsJsonObject = new JsonObject();
         JsonArray articleJsonArray = new JsonArray();
         for (NewArticle article : this.getArticles()) {
@@ -226,7 +133,7 @@ public class WxCpMessage implements Serializable {
         messageJson.add("news", newsJsonObject);
         break;
       }
-      case KefuMsgType.MPNEWS: {
+      case AppChatMsgType.MPNEWS: {
         JsonObject newsJsonObject = new JsonObject();
         if (this.getMediaId() != null) {
           newsJsonObject.addProperty("media_id", this.getMediaId());
@@ -240,7 +147,6 @@ public class WxCpMessage implements Serializable {
             articleJson.addProperty("content_source_url", article.getContentSourceUrl());
             articleJson.addProperty("content", article.getContent());
             articleJson.addProperty("digest", article.getDigest());
-            articleJson.addProperty("show_cover_pic", article.getShowCoverPic());
             articleJsonArray.add(articleJson);
           }
 
@@ -250,9 +156,8 @@ public class WxCpMessage implements Serializable {
         break;
       }
       default: {
-        // do nothing
+        //do nothing
       }
     }
   }
-
 }
